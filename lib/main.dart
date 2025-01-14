@@ -145,6 +145,8 @@ class _InputPageState extends State<InputPage> {
     Category(name: 'Ăn uống', icon: Icons.fastfood, color: Colors.orange),
     Category(name: 'Giải trí', icon: Icons.movie, color: Colors.blue),
     Category(name: 'Mua sắm', icon: Icons.shopping_cart, color: Colors.green),
+    Category(name: 'Học tập', icon: Icons.school, color: Colors.yellow),
+    Category(name: 'Sức khỏe', icon: Icons.local_hospital, color: Colors.pink),
     Category(name: 'Khác', icon: Icons.more_horiz, color: Colors.grey),
   ];
 
@@ -577,6 +579,9 @@ class _HistoryPageState extends State<HistoryPage> {
     return totalByDay;
   }
 
+
+
+
   @override
   void initState() {
     super.initState();
@@ -587,58 +592,104 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget build(BuildContext context) {
     Map<String, Map<String, double>> totalByDay = _calculateTotalByDay();
 
-    return ListView.builder(
-      itemCount: totalByDay.keys.length,
-      itemBuilder: (context, index) {
-        String date = totalByDay.keys.elementAt(index);
-        double totalThu = totalByDay[date]!['thu']!;
-        double totalChi = totalByDay[date]!['chi']!;
-        double netAmount = totalThu - totalChi;
-
-        return ListTile(
-          title: Text(DateFormat('dd/MM/yyyy').format(DateTime.parse(date))),
-          subtitle: Text('Tổng thu: ${NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(totalThu)} - Tổng chi: ${NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(totalChi)}'),
-          trailing: Text('Lợi nhuận: ${NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(netAmount)}'),
-          onTap: () {
-            // Mở màn hình chi tiết giao dịch của ngày đã chọn, truyền danh sách giao dịch cho ngày đó
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TransactionDetailsPage(
-                  date: date,
-                  transactionsForDay: _thuChiList.where((transaction) => transaction.date.split(' ')[0] == date).toList(),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class TransactionDetailsPage extends StatelessWidget {
-  final String date;
-  final List<ThuChi> transactionsForDay;
-
-  TransactionDetailsPage({required this.date, required this.transactionsForDay});
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Chi tiết giao dịch - ${DateFormat('dd/MM/yyyy').format(DateTime.parse(date))}"),
+        title: Text('Lịch sử giao dịch'),
       ),
       body: ListView.builder(
-        itemCount: transactionsForDay.length,
+        itemCount: totalByDay.keys.length,
         itemBuilder: (context, index) {
-          var transaction = transactionsForDay[index];
+          String date = totalByDay.keys.elementAt(index);
+          double totalThu = totalByDay[date]!['thu']!;
+          double totalChi = totalByDay[date]!['chi']!;
+          double netAmount = totalThu - totalChi;
+
           return Card(
-            child: ListTile(
-              leading: Icon(Icons.category), // Icon danh mục giao dịch
-              title: Text(transaction.description),
-              subtitle: Text('${transaction.category} - ${DateFormat('HH:mm').format(DateTime.parse(transaction.date))}'),
-              trailing: Text('${NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(transaction.amount)}'),
+            margin: EdgeInsets.all(10),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            elevation: 4,
+            child: Padding(
+              padding: EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Ngày
+                  Text(
+                    DateFormat('dd/MM/yyyy').format(DateTime.parse(date)),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 10),
+                  // Thu
+                  Row(
+                    children: [
+                      Icon(Icons.attach_money, color: Colors.green),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Tổng thu: ${NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(totalThu)}',
+                          style: TextStyle(fontSize: 14, color: Colors.green),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 5),
+                  // Chi
+                  Row(
+                    children: [
+                      Icon(Icons.money_off, color: Colors.red),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Tổng chi: ${NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(totalChi)}',
+                          style: TextStyle(fontSize: 14, color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 5),
+                  // Lợi nhuận
+                  Row(
+                    children: [
+                      Icon(
+                        netAmount >= 0 ? Icons.trending_up : Icons.trending_down,
+                        color: netAmount >= 0 ? Colors.blue : Colors.orange,
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Lợi nhuận: ${NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(netAmount)}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: netAmount >= 0 ? Colors.blue : Colors.orange,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  // Chi tiết
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        // Chuyển đến trang chi tiết giao dịch
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TransactionDetailsPage(
+                              date: date,
+                              transactionsForDay: _thuChiList
+                                  .where((transaction) => transaction.date.split(' ')[0] == date)
+                                  .toList(),
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text('Xem chi tiết', style: TextStyle(color: Colors.blue)),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -646,12 +697,189 @@ class TransactionDetailsPage extends StatelessWidget {
     );
   }
 }
+class TransactionDetailsPage extends StatelessWidget {
+  final String date;
+  final List<ThuChi> transactionsForDay;
 
-class AccountPage extends StatelessWidget {
+TransactionDetailsPage({required this.date, required this.transactionsForDay});
+
+// Hàm ánh xạ danh mục với icon
+IconData getCategoryIcon(String category) {
+  switch (category) {
+    case 'Ăn uống':
+      return Icons.fastfood;
+    case 'Giải trí':
+      return Icons.movie;
+    case 'Mua sắm':
+      return Icons.shopping_cart;
+    case 'Học tập':
+      return Icons.school;
+    case 'Sức khỏe':
+      return Icons.local_hospital;
+    default:
+      return Icons.more_horiz; // Icon mặc định
+  }
+}
+
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text('Trang tài khoản', style: TextStyle(fontSize: 24)),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Chi tiết giao dịch - ${DateFormat('dd/MM/yyyy').format(DateTime.parse(date))}'),
+      ),
+      body: ListView.builder(
+        itemCount: transactionsForDay.length,
+        itemBuilder: (context, index) {
+          var transaction = transactionsForDay[index];
+
+          // Lựa chọn icon tương ứng
+          IconData transactionIcon;
+          Color iconColor;
+          if (transaction.type == 'thu') {
+            transactionIcon = Icons.attach_money;
+            iconColor = Colors.green;
+          } else {
+            transactionIcon = Icons.money_off;
+            iconColor = Colors.red;
+          }
+
+          return Card(
+            margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+            elevation: 3,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            child: ListTile(
+              leading: Icon(
+                getCategoryIcon(transaction.category),
+                color: transaction.type == 'thu' ? Colors.green : Colors.red,
+                size: 30,
+              ),
+              title: Text(
+                transaction.type == 'thu' ? 'Thu nhập' : 'Chi tiêu',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 5),
+                  Text(
+                    'Số tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(transaction.amount)}',
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    'Mô tả: ${transaction.description.isNotEmpty ? transaction.description : "Không có"}',
+                    style: TextStyle(fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+class AccountPage extends StatefulWidget {
+  @override
+  AccountPageState createState() => AccountPageState();
+}
+
+
+class AccountPageState extends State<AccountPage> {
+  // Các thông tin người dùng
+  final String avatarUrl = 'https://example.com/avatar.jpg'; // Đường dẫn ảnh đại diện
+  final String fullName = 'Nguyễn Văn A';
+  final String phoneNumber = '0901234567';
+  final String birthDate = '01/01/1990';
+  double accountBalance = 0; // Số dư tài khoản ban đầu
+
+  // Hàm cập nhật số dư tài khoản
+  void updateBalance(double amount, String type) {
+    setState(() {
+      if (type == 'thu') {
+        accountBalance += amount;
+      } else if (type == 'chi') {
+        accountBalance -= amount;
+      }
+    });
+  }
+
+  // Hàm lấy giao dịch từ trang Lịch sử giao dịch
+  void getTransactionsFromHistory() async {
+    // Lấy dữ liệu giao dịch từ SharedPreferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? savedTransactions = prefs.getString('transactions');
+    if (savedTransactions != null) {
+      List<dynamic> transactionsJson = jsonDecode(savedTransactions);
+      List<ThuChi> transactions = transactionsJson.map((json) => ThuChi.fromJson(json)).toList();
+
+      // Cập nhật số dư cho từng giao dịch
+      for (var transaction in transactions) {
+        updateBalance(transaction.amount, transaction.type);
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getTransactionsFromHistory(); // Lấy dữ liệu giao dịch để cập nhật số dư
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Sử dụng NumberFormat để định dạng số tiền
+    final NumberFormat currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Trang Tài Khoản'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: CircleAvatar(
+                radius: 50,
+                backgroundImage: NetworkImage(avatarUrl),
+              ),
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Họ tên: $fullName',
+              style: TextStyle(fontSize: 18),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Số điện thoại: $phoneNumber',
+              style: TextStyle(fontSize: 18),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Ngày sinh: $birthDate',
+              style: TextStyle(fontSize: 18),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Số dư tài khoản: ${currencyFormat.format(accountBalance)}', // Định dạng số dư
+              style: TextStyle(fontSize: 18),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+class UserProfileScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Hồ Sơ Người Dùng')),
+      body: Center(
+        child: Text('Chi tiết thông tin người dùng'),
+      ),
     );
   }
 }
